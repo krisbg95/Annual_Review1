@@ -1,0 +1,280 @@
+---
+title: "All Plots"
+author: "Kristian Stefanov"
+date: "27/04/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(cache=F)
+options(scipen=999)
+options(digits = 3)
+```
+
+```{r Pfizer_BRAF,fig.width = 7,fig.height = 6}
+
+load(paste0(getwd(),"/2020-04-25-Pfizer_BRAF_Plots.RData"))
+library(ggplot2) 
+BRAF$Time <- as.factor(BRAF$Time)   
+BRAF$Dimension <- as.factor(BRAF$Dimension)
+myplot <- ggplot(BRAF, aes(Time, Score, fill=Time)) +
+  stat_boxplot(geom = "errorbar", width = 0.2) +
+  geom_boxplot() +
+  facet_wrap(~ Dimension) +
+  theme_bw()  
+
+myplot <- myplot + theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())  
+myplot <- myplot + theme(
+axis.title.x = element_text(color="black", size=18, face="bold"),
+axis.title.y = element_text(color="black", size=18, face="bold"),
+legend.position = "none",
+legend.title = element_text(color="black", size=18, face="bold"),
+legend.text = element_text(color="black", size=14, face="plain"),
+strip.text.x = element_text(color="black", size=18, face="plain"), 
+axis.text = element_text(color="black", size=14, face="plain") 
+)
+plot(myplot)
+
+dev.print(pdf, "BRAF_Pfizer.pdf",height=6, width=7)
+dev.print(png, "BRAF_Pfizer.png", res=600, height=6, width=7, units="in") 
+
+rm(list=ls())
+```
+
+
+```{r Pfizer1,fig.width = 12,fig.height = 7}
+
+load(paste0(getwd(),"/2020-04-25-Pfizer_Plots1.RData"))
+library(ggplot2)
+par(mfrow=c(1,1), cex = 1.5, cex.lab = 1.6, cex.axis=1.5,cex.main=1.8,cex.sub=1.5)
+myplot1 <- recordPlot()
+plot(canonical.variates$X_pred[,1],
+               canonical.variates$Y_pred[,1], pch = 19,mgp=c(2.8,1,0),main='Canonical correlation analysis (CCA) in RA study', 
+               bty='n', 
+               xlim = c(-4,4),
+               ylim = c(-3,6),
+               #xlab= paste(varlab[dFC],'canonical variate 1'),
+               xlab= 'Connectivty canonical variate 1',
+               #ylab='BRAF fatigue canonical variate 1')
+               ylab='Fatigue canonical variate 1')
+text(-2.2,5.7, bquote("Baseline:"~r^2 == .(round(cca_model$cancor[1], 2))*", p=0.041"),cex = font)
+
+dev.print(pdf, "CCA1.pdf",height=7, width=12)
+dev.print(png, "CCA1.png", res=600, height=7, width=12, units="in") 
+
+show(myplot1)
+
+library(stats)
+par(mfrow=c(1,1), cex = 1.5, cex.lab = 1.6, cex.axis=1.5,cex.main=1.8,cex.sub=1.5)
+d <- dist(cca_rs_data, method = "euclidean") 
+res.hc <- hclust(d, method = clusmethod ) 
+clusters <- cutree(res.hc, k = bestclusN) 
+myplot2 <- recordPlot()
+plot(cca_rs_data,
+                main= "Baseline Clusters",mgp=c(2.8,1,0),
+                xlab = "Connectivity canonical variate 1", ylab = "Connectivity canonical variate 2",col=clusters,pch = 19,  
+                xlim = c(-4,4),  ylim = c(-4,4)) 
+
+dev.print(pdf, "Clust1.pdf",height=7, width=12)
+dev.print(png, "Clust1.png", res=600, height=7, width=12, units="in") 
+
+show(myplot2)  
+
+par(mfrow=c(1,1), cex = 1.5, cex.lab = 1.6, cex.axis=1.5,cex.main=1.8,cex.sub=1.5)
+myplot3 <- recordPlot()
+hist(as.numeric(null_CI[,8]),mgp=c(2.8,1,0), breaks = 60,main ="Baseline ptbiserial index null distribution",xlab = "Index value", ylab = "Frequency",xlim=c(0.3,0.81),ylim=c(0,120))
+        abline(v=real_CI['ptbiserial'], col="red")
+        text((real_CI[['ptbiserial']] - 0.042),80,paste0("p=0.0005"),cex = font) 
+
+dev.print(pdf, "ClustSig1.pdf",height=7, width=12)
+dev.print(png, "ClustSig1.png", res=600, height=7, width=12, units="in") 
+
+show(myplot3)
+rm(list=ls())
+```
+
+```{r KW,fig.width = 6,fig.height = 7}
+
+load(paste0(getwd(),"/2020-04-25-Pfizer_KW.RData"))
+# tmp <- read.csv("Post.hoc_final.csv") 
+# tmp <- tmp[ -c(57,58) ] 
+# names(tmp)[55] <- 'Clusters'
+# names(tmp)[22] <- 'Chalder_Change' 
+
+library(ggplot2) 
+library(ggpubr)
+tmp$Clusters <- as.factor(tmp$Clusters) 
+stattest <- compare_means(Chalder_Change ~ Clusters,  data = tmp, paired = FALSE)
+my_comparisons <- list( c("1", "3"), c("1", "4"))
+myplot <- ggplot(tmp, aes(Clusters,Chalder_Change,fill=Clusters)) + labs(y= "Chalder Fatigue Change")+ stat_compare_means(comparisons = my_comparisons) + stat_compare_means(label.y = 3.5,cex=6) +
+  stat_boxplot(geom = "errorbar", width = 0.2) +
+  geom_boxplot() +
+  theme_bw()  
+
+myplot <- myplot + theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())  
+myplot <- myplot + theme(
+  axis.title.x = element_text(color="black", size=18, face="bold"),
+  axis.title.y = element_text(color="black", size=18, face="bold"),
+  legend.position = "none",
+  legend.title = element_text(color="black", size=18, face="bold"),
+  legend.text = element_text(color="black", size=14, face="plain"),
+  strip.text.x = element_text(color="black", size=18, face="plain"), 
+  axis.text = element_text(color="black", size=14, face="plain") 
+)
+
+plot(myplot)
+dev.print(pdf, "KWplot.pdf",height=6, width=7)
+dev.print(png, "Kwplot.png", res=600, height=6, width=7, units="in") 
+rm(list=ls())
+```
+
+
+```{r Pfizer2,fig.width = 12,fig.height = 7}
+
+load(paste0(getwd(),"/2020-04-25-Pfizer_Plots2.RData"))
+library(ggplot2)
+par(mfrow=c(1,1), cex = 1.5, cex.lab = 1.6, cex.axis=1.5,cex.main=1.8,cex.sub=1.5)
+myplot1 <- recordPlot()
+plot(canonical.variates$X_pred[,1],
+               canonical.variates$Y_pred[,1], pch = 19,mgp=c(2.8,1,0), 
+               bty='n', 
+               xlim = c(-4,4),
+               ylim = c(-3,6),
+               #xlab= paste(varlab[dFC],'canonical variate 1'),
+               xlab= 'Connectivty canonical variate 1',
+               #ylab='BRAF fatigue canonical variate 1')
+               ylab='Fatigue canonical variate 1')
+text(-2.2,5.7, bquote("Follow-up:"~r^2 == .(round(cca_model$cancor[1], 2))*", p=0.065"),cex = font)
+
+dev.print(pdf, "CCA2.pdf",height=7, width=12)
+dev.print(png, "CCA2.png", res=600, height=7, width=12, units="in") 
+
+show(myplot1)
+
+library(stats)
+par(mfrow=c(1,1), cex = 1.5, cex.lab = 1.6, cex.axis=1.5,cex.main=1.8,cex.sub=1.5)
+d <- dist(cca_rs_data, method = "euclidean") 
+res.hc <- hclust(d, method = clusmethod ) 
+clusters <- cutree(res.hc, k = bestclusN) 
+myplot2 <- recordPlot()
+plot(cca_rs_data,
+                main= "Follow-up Clusters",mgp=c(2.8,1,0),
+                xlab = "Connectivity canonical variate 1", ylab = "Connectivity canonical variate 2",col=clusters,pch = 19,  
+                xlim = c(-4,4),  ylim = c(-4,4)) 
+
+dev.print(pdf, "Clust2.pdf",height=7, width=12)
+dev.print(png, "Clust2.png", res=600, height=7, width=12, units="in") 
+
+show(myplot2)  
+
+par(mfrow=c(1,1), cex = 1.5, cex.lab = 1.6, cex.axis=1.5,cex.main=1.8,cex.sub=1.5)
+myplot3 <- recordPlot()
+hist(as.numeric(null_CI[,10]),mgp=c(2.8,1,0), breaks = 60,main ="Follow-up ptbiserial index null distribution",xlab = "Index value", ylab = "Frequency",xlim=c(0.3,0.81),ylim=c(0,120))
+        abline(v=real_CI['ptbiserial'], col="red")
+        text((real_CI[['ptbiserial']] - 0.042),80,paste0("p=0.0005"),cex = font) 
+
+dev.print(pdf, "ClustSig2.pdf",height=7, width=12)
+dev.print(png, "ClustSig2.png", res=600, height=7, width=12, units="in") 
+
+show(myplot3)
+rm(list=ls())
+```
+
+```{r LIFT,fig.width = 12,fig.height = 7}
+
+load(paste0(getwd(),"/2020-04-25-LIFT_Plots.RData"))
+library(ggplot2)
+par(mfrow=c(1,1), cex = 1.5, cex.lab = 1.6, cex.axis=1.5,cex.main=1.8,cex.sub=1.5)
+myplot1 <- recordPlot()
+plot(canonical.variates$X_pred[,1],mgp=c(2.8,1,0),
+               canonical.variates$Y_pred[,1], pch = 19,main="Canonical correlation analysis (CCA) in RA trial",
+               bty='n',
+               xlim = c(-4,4),
+               ylim = c(-3,6),
+               #xlab= paste(varlab[dFC],'canonical variate 1'),
+               xlab= 'Connectivty canonical variate 1',
+               #ylab='BRAF fatigue canonical variate 1')
+               ylab='Fatigue canonical variate 1')
+text(-2.5,5.7, bquote("Baseline:"~r^2 == .(round(cca_model$cancor[1], 2))*", p=0.8"),cex = font)
+
+dev.print(pdf, "CCA_LIFT.pdf",height=7, width=12)
+dev.print(png, "CCA_LIFT.png", res=600, height=7, width=12, units="in") 
+
+show(myplot1)
+
+library(stats)
+par(mfrow=c(1,1), cex = 1.5, cex.lab = 1.6, cex.axis=1.5,cex.main=1.8,cex.sub=1.5)
+d <- dist(cca_rs_data, method = "euclidean") 
+res.hc <- hclust(d, method = clusmethod ) 
+clusters <- cutree(res.hc, k = bestclusN) 
+myplot4 <- recordPlot()
+plot(cca_rs_data,mgp=c(2.8,1,0),
+                main= "RA trial baseline clusters",
+                xlab = "Connectivity canonical variate 1", ylab = "Connectivity canonical variate 2",col=clusters,pch = 19,  
+                xlim = c(-4,4),  ylim = c(-4,4),
+                cex = 1.5, cex.lab = 1.65, cex.axis=1.5,cex.main=1.8)
+dev.print(pdf, "Clust_LIFT.pdf",height=7, width=12)
+dev.print(png, "Clust_LIFT.png", res=600, height=7, width=12, units="in") 
+
+show(myplot4)  
+
+par(mfrow=c(1,1), cex = 1.5, cex.lab = 1.6, cex.axis=1.5,cex.main=1.8,cex.sub=1.5)
+myplot5 <- recordPlot()
+hist(as.numeric(null_CI[,10]),mgp=c(2.8,1,0), breaks = 60,main ="RA trial baseline ptbiserial index null distribution",xlab = "Index value", ylab = "Frequency",xlim=c(0.3,0.81),ylim=c(0,120))
+        abline(v=real_CI['ptbiserial'], col="red")
+        text((real_CI[['ptbiserial']] - 0.03),100,paste0("p=0.74"),cex = font)
+        
+dev.print(pdf, "ClustSig_LIFT.pdf",height=7, width=12)
+dev.print(png, "ClustSig_LIFT.png", res=600, height=7, width=12, units="in") 
+
+show(myplot5)  
+rm(list=ls())
+```
+
+```{r PfizerVsLIFT,fig.width = 6,fig.height = 7}
+
+load(paste0(getwd(),"/2020-04-25-PfizerVsLIFTplots.RData"))
+library(ggplot2) 
+library(ggpubr)
+Dataset$Data <- as.factor(Dataset$Data) 
+stattest <- compare_means(ESR_1 ~ Data,  data = Dataset, paired = FALSE)
+stattest2 <- compare_means(Chalder_1 ~ Data,  data = Dataset, paired = FALSE)
+
+myplot <- ggplot(Dataset, aes(Data,ESR_1,fill=Data),legend = none) + labs(y= "ESR mm/h") +  stat_compare_means(paired = FALSE, label.x = 1.38,label.y = 0.1,cex=6) + stat_boxplot(geom = "errorbar", width = 0.2) + geom_boxplot() + theme_bw()
+
+myplot <- myplot + theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())  
+myplot <- myplot + theme(
+  axis.title.x = element_text(color="black", size=18, face="bold"),
+  legend.position = "none",
+  axis.title.y = element_text(color="black", size=18, face="bold"), 
+  legend.title = element_text(color="black", size=18, face="bold"),
+  legend.text = element_text(color="black", size=14, face="plain"),
+  strip.text.x = element_text(color="black", size=18, face="plain"), 
+  axis.text = element_text(color="black", size=14, face="plain") 
+)
+plot(myplot)
+dev.print(pdf, "ESR_PfizerVsLIFT.pdf",height=7, width=6)
+dev.print(png, "ESR_PfizerVsLIFT.png", res=600, height=7, width=6, units="in") 
+
+show (myplot) 
+
+myplot2 <- ggplot(Dataset, aes(Data,Chalder_1,fill=Data)) + labs(y= "Chalder fatigue score") +  stat_compare_means(paired = FALSE, label.x = 1.38,label.y = 0.1,cex=6) + stat_boxplot(geom = "errorbar", width = 0.2) + geom_boxplot() + theme_bw()
+
+myplot2 <- myplot2 + theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())  
+myplot2 <- myplot2 + theme(
+  axis.title.x = element_text(color="black", size=18, face="bold"),
+  axis.title.y = element_text(color="black", size=18, face="bold"), 
+  legend.position = "none",
+  legend.title = element_text(color="black", size=18, face="bold"),
+  legend.text = element_text(color="black", size=14, face="plain"),
+  strip.text.x = element_text(color="black", size=18, face="plain"), 
+  axis.text = element_text(color="black", size=14, face="plain") 
+)
+plot(myplot2)
+dev.print(pdf, "Chalder_PfizerVsLIFT.pdf",height=7, width=6)
+dev.print(png, "Chalder_PfizerVsLIFT.png", res=600, height=7, width=6, units="in") 
+
+show (myplot2)
+rm(list=ls())
+```
